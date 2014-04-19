@@ -2,7 +2,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 -- | This module lets you periodically flush metrics to a statsd
--- backend.
+-- backend. Example usage:
+--
+-- > main = do
+-- >     store <- newStore
+-- >     forkStatsd defaultStatsdOptions store
 module System.Remote.Monitoring.Statsd
     (
       Statsd
