@@ -5,7 +5,7 @@ description:
   This library lets you push system metrics to a statsd server.
 homepage:            https://github.com/tibbe/ekg-statsd
 bug-reports:         https://github.com/tibbe/ekg-statsd/issues
-license:             BSD2
+license:             BSD3
 license-file:        LICENSE
 author:              Johan Tibell
 maintainer:          johan.tibell@gmail.com
