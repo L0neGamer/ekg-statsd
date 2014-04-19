@@ -47,7 +47,7 @@ statsdThreadId = threadId
 -- the flush interval statsd itself uses to flush data to its
 -- backends.
 data StatsdOptions = StatsdOptions
-    { host          :: !String  -- ^ Server hostname or IP address
+    { host          :: !T.Text  -- ^ Server hostname or IP address
     , port          :: !Int     -- ^ Server port
     , flushInterval :: !Int     -- ^ Data push interval, in ms.
     , debug         :: !Bool    -- ^ Print debug output to stderr.
@@ -70,7 +70,7 @@ forkStatsd :: StatsdOptions  -- ^ Options
            -> Metrics.Store  -- ^ Metric store
            -> IO Statsd      -- ^ Statsd sync handle
 forkStatsd opts store = do
-    addrInfos <- Socket.getAddrInfo Nothing (Just $ host opts)
+    addrInfos <- Socket.getAddrInfo Nothing (Just $ T.unpack $ host opts)
                  (Just $ show $ port opts)
     socket <- case addrInfos of
         [] -> unsupportedAddressError
@@ -84,7 +84,7 @@ forkStatsd opts store = do
     return $ Statsd tid
   where
     unsupportedAddressError = ioError $ userError $
-        "unsupported address: " ++ host opts
+        "unsupported address: " ++ T.unpack (host opts)
     emptySample = M.empty
 
 loop :: Metrics.Store   -- ^ Metric store
