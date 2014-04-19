@@ -5,11 +5,11 @@
 -- backend.
 module System.Remote.Monitoring.Statsd
     (
-      forkStatsd
+      Statsd
+    , statsdThreadId
+    , forkStatsd
     , StatsdOptions(..)
     , defaultStatsdOptions
-    , Statsd
-    , statsdThreadId
     ) where
 
 import Control.Concurrent (ThreadId, forkIO, threadDelay)
