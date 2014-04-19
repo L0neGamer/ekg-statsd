@@ -7,6 +7,10 @@
 -- > main = do
 -- >     store <- newStore
 -- >     forkStatsd defaultStatsdOptions store
+--
+-- You probably want to include some of the predefined metrics defined
+-- in the ekg-core package, by calling e.g. the 'registerGcStats'
+-- function defined in that package.
 module System.Remote.Monitoring.Statsd
     (
       -- * The statsd syncer
