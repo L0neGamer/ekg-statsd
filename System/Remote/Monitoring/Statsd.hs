@@ -9,6 +9,7 @@
 -- >     forkStatsd defaultStatsdOptions store
 module System.Remote.Monitoring.Statsd
     (
+      -- * The statsd syncer
       Statsd
     , statsdThreadId
     , forkStatsd
