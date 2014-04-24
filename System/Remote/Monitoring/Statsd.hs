@@ -120,8 +120,15 @@ diffMetrics old new = M.foldlWithKey' combine M.empty new
   where
     combine m name val = case M.lookup name old of
         Just val'
-            | val == val' -> m
-        _                 -> M.insert name val m
+            | val `eqMetric` val' -> m
+        _                         -> M.insert name val m
+
+    eqMetric :: Metrics.Value -> Metrics.Value -> Bool
+    eqMetric (Metrics.Counter n1) (Metrics.Counter n2) = n1 == n2
+    eqMetric (Metrics.Gauge n1) (Metrics.Gauge n2)     = n1 == n2
+    eqMetric (Metrics.Label n1) (Metrics.Label n2)     = n1 == n2
+    -- Distributions are assumed to be non-equal.
+    eqMetric _ _                                       = False
 
 flushSample :: Metrics.Sample -> Socket.Socket -> StatsdOptions -> IO ()
 flushSample sample socket opts = do
