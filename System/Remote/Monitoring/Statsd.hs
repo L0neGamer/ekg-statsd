@@ -118,17 +118,24 @@ diffMetrics :: M.HashMap T.Text Metrics.Value -> M.HashMap T.Text Metrics.Value
             -> M.HashMap T.Text Metrics.Value
 diffMetrics old new = M.foldlWithKey' combine M.empty new
   where
-    combine m name val = case M.lookup name old of
-        Just val'
-            | val `eqMetric` val' -> m
-        _                         -> M.insert name val m
+    combine m name new = case M.lookup name old of
+        Just old -> case diffMetric old new of
+            Just val -> M.insert name val m
+            Nothing  -> m
+        _        -> M.insert name new m
 
-    eqMetric :: Metrics.Value -> Metrics.Value -> Bool
-    eqMetric (Metrics.Counter n1) (Metrics.Counter n2) = n1 == n2
-    eqMetric (Metrics.Gauge n1) (Metrics.Gauge n2)     = n1 == n2
-    eqMetric (Metrics.Label n1) (Metrics.Label n2)     = n1 == n2
+    diffMetric :: Metrics.Value -> Metrics.Value -> Maybe Metrics.Value
+    diffMetric (Metrics.Counter n1) (Metrics.Counter n2)
+        | n1 == n2  = Nothing
+        | otherwise = Just $! Metrics.Counter $ n2 - n1
+    diffMetric (Metrics.Gauge n1) (Metrics.Gauge n2)
+        | n1 == n2  = Nothing
+        | otherwise = Just $ Metrics.Gauge n2
+    diffMetric (Metrics.Label n1) (Metrics.Label n2)
+        | n1 == n2  = Nothing
+        | otherwise = Just $ Metrics.Label n2
     -- Distributions are assumed to be non-equal.
-    eqMetric _ _                                       = False
+    diffMetric _ _  = Nothing
 
 flushSample :: Metrics.Sample -> Socket.Socket -> StatsdOptions -> IO ()
 flushSample sample socket opts = do
@@ -151,4 +158,5 @@ flushSample sample socket opts = do
             [ "DEBUG: "
             , msg
             ]
+        -- TODO: Handle send failure.
         Socket.sendAll socket msg
