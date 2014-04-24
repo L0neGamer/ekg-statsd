@@ -5,6 +5,7 @@
 *.tix
 .hpc/
 /dist/*
+/examples/dist/*
 .cabal-sandbox/
 .DS_Store
 cabal.config
