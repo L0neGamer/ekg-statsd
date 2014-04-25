@@ -143,15 +143,7 @@ flushSample sample socket opts = do
 
     isDebug = debug opts
     send ty name val = do
-        let msg = B8.concat
-                  [ T.encodeUtf8 name
-                  , ":"
-                  , B8.pack val
-                  , ty
-                  ]
-        when isDebug $ B8.hPutStrLn stderr $ B8.concat
-            [ "DEBUG: "
-            , msg
-            ]
+        let !msg = B8.concat [T.encodeUtf8 name, ":", B8.pack val, ty]
+        when isDebug $ B8.hPutStrLn stderr $ B8.concat [ "DEBUG: ", msg]
         -- TODO: Handle send failure.
         Socket.sendAll socket msg
