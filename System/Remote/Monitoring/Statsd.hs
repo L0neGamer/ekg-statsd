@@ -22,6 +22,7 @@ module System.Remote.Monitoring.Statsd
     ) where
 
 import Control.Concurrent (ThreadId, forkIO, threadDelay)
+import Control.Exception (finally)
 import Control.Monad (forM_, when)
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.HashMap.Strict as M
@@ -89,8 +90,10 @@ forkStatsd opts store = do
                       Socket.Datagram Socket.defaultProtocol
             Socket.connect socket (Socket.addrAddress addrInfo)
             return socket
-    -- TODO: Make sure the socket gets closed?
-    tid <- forkIO $ loop store emptySample socket opts
+    -- TODO: Is this thread-safe? What if an exception strikes before
+    -- loop has started?
+    tid <- forkIO (loop store emptySample socket opts
+                   `finally` Socket.close socket)
     return $ Statsd tid
   where
     unsupportedAddressError = ioError $ userError $
