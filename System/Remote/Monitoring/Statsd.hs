@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | This module lets you periodically flush metrics to a statsd
 -- backend. Example usage:
 --
@@ -23,12 +24,15 @@ module System.Remote.Monitoring.Statsd
 
 import Control.Concurrent (ThreadId, forkFinally, myThreadId, threadDelay,
                            throwTo)
+import Control.Exception (IOException, catch)
 import Control.Monad (forM_, when)
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.HashMap.Strict as M
 import Data.Int (Int64)
+import Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.IO as T
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
@@ -156,5 +160,6 @@ flushSample sample socket opts = do
     send ty name val = do
         let !msg = B8.concat [T.encodeUtf8 name, ":", B8.pack val, ty]
         when isDebug $ B8.hPutStrLn stderr $ B8.concat [ "DEBUG: ", msg]
-        -- TODO: Handle send failure.
-        Socket.sendAll socket msg
+        Socket.sendAll socket msg `catch` \ (e :: IOException) -> do
+            T.hPutStrLn stderr ("Problem sending message: " <> T.pack (show e))
+            return ()
