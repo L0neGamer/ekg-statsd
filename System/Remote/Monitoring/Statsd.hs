@@ -57,9 +57,15 @@ data StatsdOptions = StatsdOptions
     , debug         :: !Bool    -- ^ Print debug output to stderr.
     }
 
--- | Default options. Connect to a statsd server running on
--- \"127.0.0.1\", port 8125, flushing every second. Debugging turned
--- off.
+-- | Defaults:
+--
+-- * @host@ = @\"127.0.0.1\"@
+--
+-- * @port@ = @8125@
+--
+-- * @flushInterval@ = @1000@
+--
+-- * @debug@ = @False@
 defaultStatsdOptions :: StatsdOptions
 defaultStatsdOptions = StatsdOptions
     { host          = "127.0.0.1"
