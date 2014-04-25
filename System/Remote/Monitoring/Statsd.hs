@@ -111,14 +111,9 @@ time = (round . (* 1000000.0) . toDouble) `fmap` getPOSIXTime
   where toDouble = realToFrac :: Real a => a -> Double
 
 diffSamples :: Metrics.Sample -> Metrics.Sample -> Metrics.Sample
-diffSamples old new = diffMetrics old new
-
--- TODO: Combine different metrics somehow.
-diffMetrics :: M.HashMap T.Text Metrics.Value -> M.HashMap T.Text Metrics.Value
-            -> M.HashMap T.Text Metrics.Value
-diffMetrics old new = M.foldlWithKey' combine M.empty new
+diffSamples prev curr = M.foldlWithKey' combine M.empty curr
   where
-    combine m name new = case M.lookup name old of
+    combine m name new = case M.lookup name prev of
         Just old -> case diffMetric old new of
             Just val -> M.insert name val m
             Nothing  -> m
