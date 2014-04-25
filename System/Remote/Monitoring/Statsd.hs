@@ -161,5 +161,6 @@ flushSample sample socket opts = do
         let !msg = B8.concat [T.encodeUtf8 name, ":", B8.pack val, ty]
         when isDebug $ B8.hPutStrLn stderr $ B8.concat [ "DEBUG: ", msg]
         Socket.sendAll socket msg `catch` \ (e :: IOException) -> do
-            T.hPutStrLn stderr ("Problem sending message: " <> T.pack (show e))
+            T.hPutStrLn stderr $ "ERROR: Couldn't send message: " <>
+                T.pack (show e)
             return ()
