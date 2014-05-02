@@ -39,7 +39,7 @@ import qualified Network.Socket.ByteString as Socket
 import qualified System.Metrics as Metrics
 import System.IO (stderr)
 
-#if __GLASGOW_HASKELL__ >= 704
+#if __GLASGOW_HASKELL__ >= 706
 import Control.Concurrent (forkFinally)
 #else
 import Control.Concurrent (forkIO)
@@ -175,7 +175,7 @@ flushSample sample socket opts = do
 ------------------------------------------------------------------------
 -- Backwards compatibility shims
 
-#if __GLASGOW_HASKELL__ < 704
+#if __GLASGOW_HASKELL__ < 706
 forkFinally :: IO a -> (Either SomeException a -> IO ()) -> IO ThreadId
 forkFinally action and_then =
   mask $ \restore ->
