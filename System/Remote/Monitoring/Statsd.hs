@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -22,8 +23,7 @@ module System.Remote.Monitoring.Statsd
     , defaultStatsdOptions
     ) where
 
-import Control.Concurrent (ThreadId, forkFinally, myThreadId, threadDelay,
-                           throwTo)
+import Control.Concurrent (ThreadId, myThreadId, threadDelay, throwTo)
 import Control.Exception (IOException, catch)
 import Control.Monad (forM_, when)
 import qualified Data.ByteString.Char8 as B8
@@ -38,6 +38,13 @@ import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
 import qualified System.Metrics as Metrics
 import System.IO (stderr)
+
+#if __GLASGOW_HASKELL__ >= 704
+import Control.Concurrent (forkFinally)
+#else
+import Control.Concurrent (forkIO)
+import Control.Exception (SomeException, mask, try)
+#endif
 
 -- | A handle that can be used to control the statsd sync thread.
 -- Created by 'forkStatsd'.
@@ -164,3 +171,13 @@ flushSample sample socket opts = do
             T.hPutStrLn stderr $ "ERROR: Couldn't send message: " <>
                 T.pack (show e)
             return ()
+
+------------------------------------------------------------------------
+-- Backwards compatibility shims
+
+#if __GLASGOW_HASKELL__ < 704
+forkFinally :: IO a -> (Either SomeException a -> IO ()) -> IO ThreadId
+forkFinally action and_then =
+  mask $ \restore ->
+    forkIO $ try (restore action) >>= and_then
+#endif
