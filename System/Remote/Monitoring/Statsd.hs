@@ -44,6 +44,7 @@ import Control.Concurrent (forkFinally)
 #else
 import Control.Concurrent (forkIO)
 import Control.Exception (SomeException, mask, try)
+import Prelude hiding (catch)
 #endif
 
 -- | A handle that can be used to control the statsd sync thread.
