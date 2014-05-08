@@ -68,6 +68,8 @@ data StatsdOptions = StatsdOptions
     , port          :: !Int     -- ^ Server port
     , flushInterval :: !Int     -- ^ Data push interval, in ms.
     , debug         :: !Bool    -- ^ Print debug output to stderr.
+    , prefix        :: !T.Text  -- ^ Prefix to add to all metric names.
+    , suffix        :: !T.Text  -- ^ Suffix to add to all metric names.
     }
 
 -- | Defaults:
@@ -85,6 +87,8 @@ defaultStatsdOptions = StatsdOptions
     , port          = 8125
     , flushInterval = 1000
     , debug         = False
+    , prefix        = ""
+    , suffix        = ""
     }
 
 -- | Create a thread that periodically flushes the metrics in the
@@ -158,13 +162,16 @@ diffSamples prev curr = M.foldlWithKey' combine M.empty curr
 flushSample :: Metrics.Sample -> Socket.Socket -> StatsdOptions -> IO ()
 flushSample sample socket opts = do
     forM_ (M.toList $ sample) $ \ (name, val) ->
-        flushMetric name val
+        let fullName = dottedPrefix <> name <> dottedSuffix
+        in  flushMetric fullName val
   where
     flushMetric name (Metrics.Counter n) = send "|c" name (show n)
     flushMetric name (Metrics.Gauge n)   = send "|g" name (show n)
     flushMetric _ _                      = return ()
 
     isDebug = debug opts
+    dottedPrefix = if T.null (prefix opts) then "" else prefix opts <> "."
+    dottedSuffix = if T.null (suffix opts) then "" else "." <> suffix opts
     send ty name val = do
         let !msg = B8.concat [T.encodeUtf8 name, ":", B8.pack val, ty]
         when isDebug $ B8.hPutStrLn stderr $ B8.concat [ "DEBUG: ", msg]
