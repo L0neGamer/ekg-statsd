@@ -79,7 +79,10 @@ data StatsdOptions = StatsdOptions
       -- | Prefix to add to all metric names.
     , prefix :: !T.Text
 
-      -- | Suffix to add to all metric names.
+      -- | Suffix to add to all metric names. This is particularly
+      -- useful for sending per host stats by settings this value to:
+      -- @takeWhile (/= \'.\') \<$\> getHostName@, using @getHostName@
+      -- from the @Network.BSD@ module in the network package.
     , suffix :: !T.Text
     }
 
