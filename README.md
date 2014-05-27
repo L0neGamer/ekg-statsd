@@ -1,11 +1,11 @@
 # ekg-statsd: statsd backend for ekg
 
 This library lets you send metrics gathered by the ekg family of
-packages (e.g. ekg-core) to [statsd](https://github.com/etsy/statsd/).
-While statsd fulfills a very similar role to ekg, it supports many
-more backends/graphing systems (e.g. Graphite). By sending your
-metrics to statsd, you can have your ekg metrics appear in these
-systems.
+packages (e.g. ekg-core and ekg) to
+[statsd](https://github.com/etsy/statsd/). While statsd fulfills a
+very similar role to ekg, it supports many more backends/graphing
+systems (e.g. Graphite). By sending your metrics to statsd, you can
+have your ekg metrics appear in these systems.
 
 # Getting started
 
@@ -31,6 +31,9 @@ package
         handle <- forkServer "localhost" 8000
         forkStatsd defaultStatsdOptions (serverMetricStore handle)
         ...
+
+`forkStatsd` starts a new thread the will periodically send your
+metrics to statsd using UDP.
 
 # Get involved!
 
