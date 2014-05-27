@@ -64,12 +64,23 @@ statsdThreadId = threadId
 -- the flush interval statsd itself uses to flush data to its
 -- backends.
 data StatsdOptions = StatsdOptions
-    { host          :: !T.Text  -- ^ Server hostname or IP address
-    , port          :: !Int     -- ^ Server port
-    , flushInterval :: !Int     -- ^ Data push interval, in ms.
-    , debug         :: !Bool    -- ^ Print debug output to stderr.
-    , prefix        :: !T.Text  -- ^ Prefix to add to all metric names.
-    , suffix        :: !T.Text  -- ^ Suffix to add to all metric names.
+    { -- | Server hostname or IP address
+      host :: !T.Text
+
+      -- | Server port
+    , port :: !Int
+
+      -- | Data push interval, in ms.
+    , flushInterval :: !Int
+
+      -- | Print debug output to stderr.
+    , debug :: !Bool
+
+      -- | Prefix to add to all metric names.
+    , prefix :: !T.Text
+
+      -- | Suffix to add to all metric names.
+    , suffix :: !T.Text
     }
 
 -- | Defaults:
