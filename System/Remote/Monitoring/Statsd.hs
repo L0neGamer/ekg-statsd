@@ -135,7 +135,7 @@ forkStatsd opts store = do
 
 loop :: Metrics.Store            -- ^ Metric store
      -> Metrics.Sample           -- ^ Last sampled metrics
-     -> (B8.ByteString -> IO ()) -- ^ Connected socket
+     -> (B8.ByteString -> IO ()) -- ^ Action to send a sample
      -> StatsdOptions            -- ^ Options
      -> IO ()
 loop store lastSample sendSample opts = do
