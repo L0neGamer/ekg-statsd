@@ -113,17 +113,17 @@ forkStatsd :: StatsdOptions  -- ^ Options
 forkStatsd opts store = do
     addrInfos <- Socket.getAddrInfo Nothing (Just $ T.unpack $ host opts)
                  (Just $ show $ port opts)
-    socket <- case addrInfos of
+    (sendSample, closeSocket) <- case addrInfos of
         [] -> unsupportedAddressError
         (addrInfo:_) -> do
             socket <- Socket.socket (Socket.addrFamily addrInfo)
                       Socket.Datagram Socket.defaultProtocol
-            Socket.connect socket (Socket.addrAddress addrInfo)
-            return socket
-    let sendSample = Socket.sendAll socket
+            return
+              (\msg -> Socket.sendAllTo socket msg (Socket.addrAddress addrInfo)
+              , Socket.close socket)
     me <- myThreadId
     tid <- forkFinally (loop store emptySample sendSample opts) $ \ r -> do
-        Socket.close socket
+        closeSocket
         case r of
             Left e  -> throwTo me e
             Right _ -> return ()
