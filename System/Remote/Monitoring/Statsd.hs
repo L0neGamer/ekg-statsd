@@ -118,9 +118,18 @@ forkStatsd opts store = do
         (addrInfo:_) -> do
             socket <- Socket.socket (Socket.addrFamily addrInfo)
                       Socket.Datagram Socket.defaultProtocol
-            return
-              (\msg -> Socket.sendAllTo socket msg (Socket.addrAddress addrInfo)
-              , Socket.close socket)
+
+            let socketAddress = Socket.addrAddress addrInfo
+
+            sendSample <- if debug opts
+              then do
+                   Socket.connect socket socketAddress
+                   return $ \msg -> Socket.sendAll   socket msg
+
+              else return $ \msg -> Socket.sendAllTo socket msg socketAddress
+
+            return (sendSample, Socket.close socket)
+
     me <- myThreadId
     tid <- forkFinally (loop store emptySample sendSample opts) $ \ r -> do
         closeSocket
