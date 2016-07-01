@@ -37,6 +37,7 @@ import Data.Time.Clock.POSIX (getPOSIXTime)
 import qualified Network.Socket as Socket
 import qualified Network.Socket.ByteString as Socket
 import qualified System.Metrics as Metrics
+import qualified System.Metrics.Distribution.Internal as Distribution
 import System.IO (stderr)
 
 #if __GLASGOW_HASKELL__ >= 706
@@ -170,18 +171,31 @@ diffSamples prev curr = M.foldlWithKey' combine M.empty curr
     diffMetric (Metrics.Label n1) (Metrics.Label n2)
         | n1 == n2  = Nothing
         | otherwise = Just $ Metrics.Label n2
-    -- Distributions are assumed to be non-equal.
+    diffMetric (Metrics.Distribution d1) (Metrics.Distribution d2)
+        | Distribution.count d1 == Distribution.count d2 = Nothing
+        | otherwise = Just $ Metrics.Distribution $ d2
+            { Distribution.count = Distribution.count d2 - Distribution.count d1
+            }
     diffMetric _ _  = Nothing
 
 flushSample :: Metrics.Sample -> Socket.Socket -> StatsdOptions -> IO ()
-flushSample sample socket opts = do
-    forM_ (M.toList $ sample) $ \ (name, val) ->
+flushSample sample socket opts =
+    forM_ (M.toList sample) $ \ (name, val) ->
         let fullName = dottedPrefix <> name <> dottedSuffix
         in  flushMetric fullName val
   where
-    flushMetric name (Metrics.Counter n) = send "|c" name (show n)
-    flushMetric name (Metrics.Gauge n)   = send "|g" name (show n)
-    flushMetric _ _                      = return ()
+    flushMetric name (Metrics.Counter n)      = send "|c" name (show n)
+    flushMetric name (Metrics.Gauge n)        = send "|g" name (show n)
+    flushMetric name (Metrics.Distribution d) = sendDistribution name d
+    flushMetric _    (Metrics.Label _)        = return ()
+
+    sendDistribution name d = do
+      send "|g" (name <> "." <> "mean"    ) (show $ Distribution.mean     d)
+      send "|g" (name <> "." <> "variance") (show $ Distribution.variance d)
+      send "|c" (name <> "." <> "count"   ) (show $ Distribution.count    d)
+      send "|g" (name <> "." <> "sum"     ) (show $ Distribution.sum      d)
+      send "|g" (name <> "." <> "min"     ) (show $ Distribution.min      d)
+      send "|g" (name <> "." <> "max"     ) (show $ Distribution.max      d)
 
     isDebug = debug opts
     dottedPrefix = if T.null (prefix opts) then "" else prefix opts <> "."
