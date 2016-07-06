@@ -1,0 +1,4 @@
+packages:
+- '.'
+- examples/
+resolver: lts-6.6
