@@ -24,7 +24,7 @@ library
     ekg-core >= 0.1 && < 1.0,
     network < 2.7,
     text < 1.3,
-    time < 1.6,
+    time < 1.7,
     unordered-containers < 0.3
 
   default-language:    Haskell2010
