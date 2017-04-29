@@ -1,3 +1,12 @@
+## 0.2.1.0 (2016-08-11)
+
+ * Send distributions as gauges and counters.
+ * Update examples.
+
+## 0.2.0.4 (2016-05-28)
+
+ * GHC 8.0 support.
+
 ## 0.2.0.3 (2015-06-06)
 
  * Support GHC 7.10.
