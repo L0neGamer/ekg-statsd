@@ -5,6 +5,7 @@ module Main
 
 import Control.Concurrent (threadDelay)
 import Control.Exception (evaluate)
+import Control.Monad (forever)
 import Data.List (foldl')
 import System.Metrics
 import qualified System.Metrics.Counter as Counter
@@ -22,10 +23,11 @@ main = do
     store <- newStore
     registerGcMetrics store
     iters <- createCounter "iterations" store
-    forkStatsd defaultStatsdOptions store
-    let loop n = do
-            evaluate $ mean [1..n]
-            Counter.inc iters
-            threadDelay 2000
-            loop n
+    _ <- forkStatsd defaultStatsdOptions store
+    let loop :: Int -> IO ()
+        loop n = forever $ do
+          let n' = fromIntegral n :: Double
+          _ <- evaluate $ mean [1..n']
+          Counter.inc iters
+          threadDelay 2000
     loop 1000000
