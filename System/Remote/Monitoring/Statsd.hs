@@ -114,16 +114,26 @@ forkStatsd :: StatsdOptions  -- ^ Options
 forkStatsd opts store = do
     addrInfos <- Socket.getAddrInfo Nothing (Just $ T.unpack $ host opts)
                  (Just $ show $ port opts)
-    socket <- case addrInfos of
+    (sendSample, closeSocket) <- case addrInfos of
         [] -> unsupportedAddressError
         (addrInfo:_) -> do
             socket <- Socket.socket (Socket.addrFamily addrInfo)
                       Socket.Datagram Socket.defaultProtocol
-            Socket.connect socket (Socket.addrAddress addrInfo)
-            return socket
+
+            let socketAddress = Socket.addrAddress addrInfo
+
+            sendSample <- if debug opts
+              then do
+                   Socket.connect socket socketAddress
+                   return $ \msg -> Socket.sendAll   socket msg
+
+              else return $ \msg -> Socket.sendAllTo socket msg socketAddress
+
+            return (sendSample, Socket.close socket)
+
     me <- myThreadId
-    tid <- forkFinally (loop store emptySample socket opts) $ \ r -> do
-        Socket.close socket
+    tid <- forkFinally (loop store emptySample sendSample opts) $ \ r -> do
+        closeSocket
         case r of
             Left e  -> throwTo me e
             Right _ -> return ()
@@ -133,19 +143,19 @@ forkStatsd opts store = do
         "unsupported address: " ++ T.unpack (host opts)
     emptySample = M.empty
 
-loop :: Metrics.Store   -- ^ Metric store
-     -> Metrics.Sample  -- ^ Last sampled metrics
-     -> Socket.Socket   -- ^ Connected socket
-     -> StatsdOptions   -- ^ Options
+loop :: Metrics.Store            -- ^ Metric store
+     -> Metrics.Sample           -- ^ Last sampled metrics
+     -> (B8.ByteString -> IO ()) -- ^ Action to send a sample
+     -> StatsdOptions            -- ^ Options
      -> IO ()
-loop store lastSample socket opts = do
+loop store lastSample sendSample opts = do
     start <- time
     sample <- Metrics.sampleAll store
     let !diff = diffSamples lastSample sample
-    flushSample diff socket opts
+    flushSample diff sendSample opts
     end <- time
     threadDelay (flushInterval opts * 1000 - fromIntegral (end - start))
-    loop store sample socket opts
+    loop store sample sendSample opts
 
 -- | Microseconds since epoch.
 time :: IO Int64
@@ -178,8 +188,8 @@ diffSamples prev curr = M.foldlWithKey' combine M.empty curr
             }
     diffMetric _ _  = Nothing
 
-flushSample :: Metrics.Sample -> Socket.Socket -> StatsdOptions -> IO ()
-flushSample sample socket opts =
+flushSample :: Metrics.Sample -> (B8.ByteString -> IO ()) -> StatsdOptions -> IO ()
+flushSample sample sendSample opts = do
     forM_ (M.toList sample) $ \ (name, val) ->
         let fullName = dottedPrefix <> name <> dottedSuffix
         in  flushMetric fullName val
@@ -203,7 +213,7 @@ flushSample sample socket opts =
     send ty name val = do
         let !msg = B8.concat [T.encodeUtf8 name, ":", B8.pack val, ty]
         when isDebug $ B8.hPutStrLn stderr $ B8.concat [ "DEBUG: ", msg]
-        Socket.sendAll socket msg `catch` \ (e :: IOException) -> do
+        sendSample msg `catch` \ (e :: IOException) -> do
             T.hPutStrLn stderr $ "ERROR: Couldn't send message: " <>
                 T.pack (show e)
             return ()
