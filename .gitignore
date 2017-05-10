@@ -10,3 +10,4 @@
 .DS_Store
 cabal.config
 cabal.sandbox.config
+.stack-work
