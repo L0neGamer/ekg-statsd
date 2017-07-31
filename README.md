@@ -1,4 +1,4 @@
-# ekg-statsd: statsd backend for ekg
+# ekg-statsd: statsd backend for ekg [![Hackage version](https://img.shields.io/hackage/v/ekg-statsd.svg?label=Hackage)](https://hackage.haskell.org/package/ekg-statsd) [![Build Status](https://secure.travis-ci.org/tibbe/ekg-statsd.svg?branch=master)](http://travis-ci.org/tibbe/ekg-statsd)
 
 This library lets you send metrics gathered by the ekg family of
 packages (e.g. ekg-core and ekg) to
