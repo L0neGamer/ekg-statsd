@@ -1,3 +1,8 @@
+## 0.2.1.1 (2017-07-31)
+
+ * Support GHC 8.2.1.
+ * Suppress errors when sending to a non-existent receiver (#6).
+
 ## 0.2.1.0 (2016-08-11)
 
  * Send distributions as gauges and counters.
