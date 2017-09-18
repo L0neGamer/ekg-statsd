@@ -77,7 +77,7 @@ data StatsdOptions = StatsdOptions
       -- | Set the number of iterations after which we perform
       -- a "full flush". If set to Nothing, ekg-statsd will be free
       -- to compute the difference between the previous samples and
-      -- the current one, sending to the daemon only metrics who changed.
+      -- the current one, sending to the daemon only metrics that changed.
       -- Setting `fullFlushIterations` to, for example, Just 100, would
       -- ensure that every 100 iterations of the main loop we would
       -- send the full "snapshot" of the metrics.
@@ -164,14 +164,14 @@ loop :: Metrics.Store            -- ^ Metric store
 loop store lastSample sendSample currentIteration opts = do
     start <- time
     currentSample <- Metrics.sampleAll store
-    -- Check wether or not we need to perform a "full flush", in
+    -- Check whether or not we need to perform a "full flush", in
     -- which case we reset the counter and send downstream to flushing
     -- the current snapshot of the `Store`, otherwise we increase the counter
     -- and compute the diff between the previous and the current sample.
     let (!newIterationCount, !sample) =
           case fullFlushIterations opts of
-            Just x | x >= currentIteration -> (0, sample)
-            _  -> (newIterationCount + 1, diffSamples lastSample currentSample)
+            Just x | currentIteration >= x -> (0, sample)
+            _  -> (currentIteration + 1, diffSamples lastSample currentSample)
     flushSample sample sendSample opts
     end <- time
     threadDelay (flushInterval opts * 1000 - fromIntegral (end - start))
