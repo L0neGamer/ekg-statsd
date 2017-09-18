@@ -1,3 +1,8 @@
+## 0.2.1.2 (2017-09-18)
+
+ * Add extra `fullFlushIterations` option to control the amount
+   of data sent to `statsd`.
+
 ## 0.2.1.1 (2017-07-31)
 
  * Support GHC 8.2.1.

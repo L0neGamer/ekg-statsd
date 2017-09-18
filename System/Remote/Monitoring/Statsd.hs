@@ -156,7 +156,7 @@ forkStatsd opts store = do
             return (sendSample, Socket.close socket)
 
     me <- myThreadId
-    tid <- forkFinally (loop store emptySample sendSample 0 opts) $ \ r -> do
+    tid <- forkFinally (loop store emptySample sendSample 1 opts) $ \ r -> do
         closeSocket
         case r of
             Left e  -> throwTo me e
@@ -182,7 +182,7 @@ loop store lastSample sendSample currentIteration opts = do
     flushSample flushMode sendSample opts
     end <- time
     threadDelay (flushInterval opts * 1000 - fromIntegral (end - start))
-    let !newIteration = if isFull flushMode then 0 else currentIteration + 1
+    let !newIteration = if isFull flushMode then 1 else currentIteration + 1
     loop store currentSample sendSample newIteration opts
 
 -- | Microseconds since epoch.
