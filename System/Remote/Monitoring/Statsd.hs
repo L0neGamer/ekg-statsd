@@ -170,7 +170,7 @@ loop store lastSample sendSample currentIteration opts = do
     -- and compute the diff between the previous and the current sample.
     let (!newIterationCount, !sample) =
           case fullFlushIterations opts of
-            Just x | currentIteration >= x -> (0, sample)
+            Just x | currentIteration >= x -> (0, currentSample)
             _  -> (currentIteration + 1, diffSamples lastSample currentSample)
     flushSample sample sendSample opts
     end <- time
