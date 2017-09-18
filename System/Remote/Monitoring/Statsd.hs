@@ -74,6 +74,15 @@ data StatsdOptions = StatsdOptions
       -- | Data push interval, in ms.
     , flushInterval :: !Int
 
+      -- | Set the number of iterations after which we perform
+      -- a "full flush". If set to Nothing, ekg-statsd will be free
+      -- to compute the difference between the previous samples and
+      -- the current one, sending to the daemon only metrics that changed.
+      -- Setting `fullFlushIterations` to, for example, Just 100, would
+      -- ensure that every 100 iterations of the main loop we would
+      -- send the full "snapshot" of the metrics.
+    , fullFlushIterations :: Maybe Int
+
       -- | Print debug output to stderr.
     , debug :: !Bool
 
@@ -95,16 +104,31 @@ data StatsdOptions = StatsdOptions
 --
 -- * @flushInterval@ = @1000@
 --
+-- * @fullFlushIterations@ = @Nothing@
+--
 -- * @debug@ = @False@
 defaultStatsdOptions :: StatsdOptions
 defaultStatsdOptions = StatsdOptions
-    { host          = "127.0.0.1"
-    , port          = 8125
-    , flushInterval = 1000
-    , debug         = False
-    , prefix        = ""
-    , suffix        = ""
+    { host                = "127.0.0.1"
+    , port                = 8125
+    , flushInterval       = 1000
+    , fullFlushIterations = Nothing
+    , debug               = False
+    , prefix              = ""
+    , suffix              = ""
     }
+
+-- | Used internally to modify the behaviour of `flushSample` according
+-- to whether we reached or not the number of iterations in `fullFlushIterations`.
+data FlushMode = Full Metrics.Sample
+               -- ^ Flush the current snapshot of the `Metrics.Store` in full.
+               | Diff Metrics.Sample Metrics.Sample
+               -- ^ Flush only what's changed between iterations.
+
+-- | Returns `True` if the `FlushMode` is a full one, `False` otherwise.
+isFull :: FlushMode -> Bool
+isFull (Full _)   = True
+isFull (Diff _ _) = False
 
 -- | Create a thread that periodically flushes the metrics in the
 -- store to statsd.
@@ -132,7 +156,7 @@ forkStatsd opts store = do
             return (sendSample, Socket.close socket)
 
     me <- myThreadId
-    tid <- forkFinally (loop store emptySample sendSample opts) $ \ r -> do
+    tid <- forkFinally (loop store emptySample sendSample 1 opts) $ \ r -> do
         closeSocket
         case r of
             Left e  -> throwTo me e
@@ -146,22 +170,28 @@ forkStatsd opts store = do
 loop :: Metrics.Store            -- ^ Metric store
      -> Metrics.Sample           -- ^ Last sampled metrics
      -> (B8.ByteString -> IO ()) -- ^ Action to send a sample
+     -> Int                      -- ^ The current iteration
      -> StatsdOptions            -- ^ Options
      -> IO ()
-loop store lastSample sendSample opts = do
+loop store lastSample sendSample currentIteration opts = do
     start <- time
-    sample <- Metrics.sampleAll store
-    let !diff = diffSamples lastSample sample
-    flushSample diff sendSample opts
+    currentSample <- Metrics.sampleAll store
+    let flushMode = case fullFlushIterations opts of
+            Just x | currentIteration >= x -> Full currentSample
+            _                              -> Diff lastSample currentSample
+    flushSample flushMode sendSample opts
     end <- time
     threadDelay (flushInterval opts * 1000 - fromIntegral (end - start))
-    loop store sample sendSample opts
+    let !newIteration = if isFull flushMode then 1 else currentIteration + 1
+    loop store currentSample sendSample newIteration opts
 
 -- | Microseconds since epoch.
 time :: IO Int64
 time = (round . (* 1000000.0) . toDouble) `fmap` getPOSIXTime
   where toDouble = realToFrac :: Real a => a -> Double
 
+-- | Compares the previously-sampled metrics with the current ones,
+-- yielding the diff of the two.
 diffSamples :: Metrics.Sample -> Metrics.Sample -> Metrics.Sample
 diffSamples prev curr = M.foldlWithKey' combine M.empty curr
   where
@@ -188,8 +218,14 @@ diffSamples prev curr = M.foldlWithKey' combine M.empty curr
             }
     diffMetric _ _  = Nothing
 
-flushSample :: Metrics.Sample -> (B8.ByteString -> IO ()) -> StatsdOptions -> IO ()
-flushSample sample sendSample opts = do
+-- | Sends the metrics to the statsd server. In case there are no metrics to
+-- be sent (i.e. `diffSamples` yields mempty), this function is effectively a noop.
+-- If the `FlusMode` is `Full`, the current state of the `Store` will be flushed.
+flushSample :: FlushMode -> (B8.ByteString -> IO ()) -> StatsdOptions -> IO ()
+flushSample flushMode sendSample opts = do
+    let sample = case flushMode of
+          Full current -> current
+          Diff previous current -> diffSamples previous current
     forM_ (M.toList sample) $ \ (name, val) ->
         let fullName = dottedPrefix <> name <> dottedSuffix
         in  flushMetric fullName val
