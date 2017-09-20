@@ -132,7 +132,7 @@ forkStatsd opts store = do
             return (sendSample, Socket.close socket)
 
     me <- myThreadId
-    tid <- forkFinally (loop store emptySample sendSample opts) $ \ r -> do
+    tid <- forkFinally (loop store sendSample opts) $ \ r -> do
         closeSocket
         case r of
             Left e  -> throwTo me e
@@ -141,52 +141,23 @@ forkStatsd opts store = do
   where
     unsupportedAddressError = ioError $ userError $
         "unsupported address: " ++ T.unpack (host opts)
-    emptySample = M.empty
 
 loop :: Metrics.Store            -- ^ Metric store
-     -> Metrics.Sample           -- ^ Last sampled metrics
      -> (B8.ByteString -> IO ()) -- ^ Action to send a sample
      -> StatsdOptions            -- ^ Options
      -> IO ()
-loop store lastSample sendSample opts = do
+loop store sendSample opts = do
     start <- time
     sample <- Metrics.sampleAll store
-    let !diff = diffSamples lastSample sample
-    flushSample diff sendSample opts
+    flushSample sample sendSample opts
     end <- time
     threadDelay (flushInterval opts * 1000 - fromIntegral (end - start))
-    loop store sample sendSample opts
+    loop store sendSample opts
 
 -- | Microseconds since epoch.
 time :: IO Int64
 time = (round . (* 1000000.0) . toDouble) `fmap` getPOSIXTime
   where toDouble = realToFrac :: Real a => a -> Double
-
-diffSamples :: Metrics.Sample -> Metrics.Sample -> Metrics.Sample
-diffSamples prev curr = M.foldlWithKey' combine M.empty curr
-  where
-    combine m name new = case M.lookup name prev of
-        Just old -> case diffMetric old new of
-            Just val -> M.insert name val m
-            Nothing  -> m
-        _        -> M.insert name new m
-
-    diffMetric :: Metrics.Value -> Metrics.Value -> Maybe Metrics.Value
-    diffMetric (Metrics.Counter n1) (Metrics.Counter n2)
-        | n1 == n2  = Nothing
-        | otherwise = Just $! Metrics.Counter $ n2 - n1
-    diffMetric (Metrics.Gauge n1) (Metrics.Gauge n2)
-        | n1 == n2  = Nothing
-        | otherwise = Just $ Metrics.Gauge n2
-    diffMetric (Metrics.Label n1) (Metrics.Label n2)
-        | n1 == n2  = Nothing
-        | otherwise = Just $ Metrics.Label n2
-    diffMetric (Metrics.Distribution d1) (Metrics.Distribution d2)
-        | Distribution.count d1 == Distribution.count d2 = Nothing
-        | otherwise = Just $ Metrics.Distribution $ d2
-            { Distribution.count = Distribution.count d2 - Distribution.count d1
-            }
-    diffMetric _ _  = Nothing
 
 flushSample :: Metrics.Sample -> (B8.ByteString -> IO ()) -> StatsdOptions -> IO ()
 flushSample sample sendSample opts = do
