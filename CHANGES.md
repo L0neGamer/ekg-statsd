@@ -1,12 +1,12 @@
 ## 0.2.2.0 (2017-09-25)
 
  * Remove internal `diffSample` optimisation and always report the full
-   state of the `Store` instead of only what's changed between iterations.
+   state of the `Store` instead of only what's changed between iterations ([#17](https://github.com/tibbe/ekg-statsd/pull/17)).
 
 ## 0.2.1.1 (2017-07-31)
 
  * Support GHC 8.2.1.
- * Suppress errors when sending to a non-existent receiver (#6).
+ * Suppress errors when sending to a non-existent receiver ([#6](https://github.com/tibbe/ekg-statsd/pull/6)).
 
 ## 0.2.1.0 (2016-08-11)
 
