@@ -1,3 +1,8 @@
+## 0.2.2.0 (2017-09-25)
+
+ * Remove internal `diffSample` optimisation and always report the full
+   state of the `Store` instead of only what's changed between iterations.
+
 ## 0.2.1.1 (2017-07-31)
 
  * Support GHC 8.2.1.
