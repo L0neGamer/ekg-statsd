@@ -17,6 +17,7 @@ module System.Remote.Monitoring.Statsd
     (
       -- * The statsd syncer
       Statsd
+    , statsdFlush
     , statsdThreadId
     , forkStatsd
     , StatsdOptions(..)
@@ -52,6 +53,7 @@ import Prelude hiding (catch)
 -- Created by 'forkStatsd'.
 data Statsd = Statsd
     { threadId :: {-# UNPACK #-} !ThreadId
+    , flush    :: IO ()
     }
 
 -- | The thread ID of the statsd sync thread. You can stop the sync by
@@ -59,6 +61,10 @@ data Statsd = Statsd
 -- exception.)
 statsdThreadId :: Statsd -> ThreadId
 statsdThreadId = threadId
+
+-- | Flush a sample to the statsd server
+statsdFlush :: Statsd -> IO ()
+statsdFlush = flush
 
 -- | Options to control how to connect to the statsd server and how
 -- often to flush metrics. The flush interval should be shorter than
@@ -131,28 +137,31 @@ forkStatsd opts store = do
 
             return (sendSample, Socket.close socket)
 
+    let flush = do
+          sample <- Metrics.sampleAll store
+          flushSample sample sendSample opts
+
     me <- myThreadId
-    tid <- forkFinally (loop store sendSample opts) $ \ r -> do
+    tid <- forkFinally (loop opts flush) $ \ r -> do
         closeSocket
         case r of
             Left e  -> throwTo me e
             Right _ -> return ()
-    return $ Statsd tid
+
+    return $ Statsd tid flush
   where
     unsupportedAddressError = ioError $ userError $
         "unsupported address: " ++ T.unpack (host opts)
 
-loop :: Metrics.Store            -- ^ Metric store
-     -> (B8.ByteString -> IO ()) -- ^ Action to send a sample
-     -> StatsdOptions            -- ^ Options
+loop :: StatsdOptions -- ^ Options
+     -> IO ()         -- ^ Action to flush the sample
      -> IO ()
-loop store sendSample opts = do
+loop opts flush = do
     start <- time
-    sample <- Metrics.sampleAll store
-    flushSample sample sendSample opts
+    flush
     end <- time
     threadDelay (flushInterval opts * 1000 - fromIntegral (end - start))
-    loop store sendSample opts
+    loop opts flush
 
 -- | Microseconds since epoch.
 time :: IO Int64
