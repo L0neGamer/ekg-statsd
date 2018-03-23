@@ -21,6 +21,7 @@ module System.Remote.Monitoring.Statsd
     , forkStatsd
     , StatsdOptions(..)
     , defaultStatsdOptions
+    , flushSample
     ) where
 
 import Control.Concurrent (ThreadId, myThreadId, threadDelay, throwTo)
