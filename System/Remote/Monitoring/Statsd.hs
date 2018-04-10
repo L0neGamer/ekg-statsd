@@ -63,6 +63,8 @@ statsdThreadId :: Statsd -> ThreadId
 statsdThreadId = threadId
 
 -- | Flush a sample to the statsd server
+--
+-- @since 0.2.3.0
 statsdFlush :: Statsd -> IO ()
 statsdFlush = flush
 
