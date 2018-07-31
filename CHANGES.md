@@ -1,4 +1,4 @@
-## 0.2.4.0
+## 0.2.4.0 (2018-07-31)
 
 * Don't rethrow `ThreadKilled` exceptions to the thread that invoked
   `forkStatsd`, so that the statsd thread can be safely killed
