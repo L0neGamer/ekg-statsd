@@ -25,7 +25,7 @@ module System.Remote.Monitoring.Statsd
     ) where
 
 import Control.Concurrent (ThreadId, myThreadId, threadDelay, throwTo)
-import Control.Exception (IOException, catch)
+import Control.Exception (IOException, AsyncException(ThreadKilled), catch, fromException)
 import Control.Monad (forM_, when)
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.HashMap.Strict as M
@@ -147,7 +147,9 @@ forkStatsd opts store = do
     tid <- forkFinally (loop opts flush) $ \ r -> do
         closeSocket
         case r of
-            Left e  -> throwTo me e
+            Left e  -> case fromException e of
+              Just ThreadKilled -> return ()
+              Nothing -> throwTo me e
             Right _ -> return ()
 
     return $ Statsd tid flush
