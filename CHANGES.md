@@ -1,3 +1,9 @@
+## 0.2.3.1 (2018-07-31)
+
+* Don't rethrow `ThreadKilled` exceptions to the thread that invoked
+  `forkStatsd`, so that the statsd thread can be safely killed
+  ([#20](https://github.com/tibbe/ekg-statsd/pull/20)).
+
 ## 0.2.3.0 (2018-04-10)
 
  * API addition: 'statsdFlush', allows to flush the sample to statsd
