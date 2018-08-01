@@ -148,8 +148,8 @@ forkStatsd opts store = do
         closeSocket
         case r of
             Left e  -> case fromException e of
-              Just ThreadKilled -> return ()
-              Nothing -> throwTo me e
+              Just ThreadKilled  -> return ()
+              _                  -> throwTo me e
             Right _ -> return ()
 
     return $ Statsd tid flush
