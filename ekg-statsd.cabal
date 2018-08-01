@@ -1,5 +1,5 @@
 name:                ekg-statsd
-version:             0.2.3.0
+version:             0.2.4.0
 synopsis:            Push metrics to statsd
 description:
   This library lets you push system metrics to a statsd server.
