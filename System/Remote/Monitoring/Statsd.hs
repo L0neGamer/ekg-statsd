@@ -184,7 +184,7 @@ flushSample sample sendSample opts priorCounts =
       in  flushMetric fullName val pc
 
     flushMetric name (Metrics.Counter n)      pc = sendCounter name n pc
-    flushMetric name (Metrics.Gauge n)        pc = pc <$ sendGauge name n
+    flushMetric name (Metrics.Gauge n)        pc = sendGauge name n >> return pc
     flushMetric name (Metrics.Distribution d) pc = sendDistribution name d pc
     flushMetric _    (Metrics.Label _)        pc = return pc
 
