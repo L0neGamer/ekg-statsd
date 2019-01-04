@@ -25,11 +25,13 @@ module System.Remote.Monitoring.Statsd
     ) where
 
 import Control.Concurrent (ThreadId, myThreadId, threadDelay, throwTo)
+import Control.Concurrent.MVar (modifyMVar_, newMVar)
 import Control.Exception (IOException, AsyncException(ThreadKilled), catch, fromException)
-import Control.Monad (forM_, when)
+import Control.Monad (foldM, when)
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.HashMap.Strict as M
 import Data.Int (Int64)
+import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -139,9 +141,10 @@ forkStatsd opts store = do
 
             return (sendSample, Socket.close socket)
 
+    priorCountsVar <- newMVar M.empty
     let flush = do
           sample <- Metrics.sampleAll store
-          flushSample sample sendSample opts
+          modifyMVar_ priorCountsVar (flushSample sample sendSample opts)
 
     me <- myThreadId
     tid <- forkFinally (loop opts flush) $ \ r -> do
@@ -172,24 +175,36 @@ time :: IO Int64
 time = (round . (* 1000000.0) . toDouble) `fmap` getPOSIXTime
   where toDouble = realToFrac :: Real a => a -> Double
 
-flushSample :: Metrics.Sample -> (B8.ByteString -> IO ()) -> StatsdOptions -> IO ()
-flushSample sample sendSample opts = do
-    forM_ (M.toList sample) $ \ (name, val) ->
-        let fullName = dottedPrefix <> name <> dottedSuffix
-        in  flushMetric fullName val
+flushSample :: Metrics.Sample -> (B8.ByteString -> IO ()) -> StatsdOptions -> M.HashMap T.Text Int64 -> IO (M.HashMap T.Text Int64)
+flushSample sample sendSample opts priorCounts =
+    foldM flushOne priorCounts (M.toList sample)
   where
-    flushMetric name (Metrics.Counter n)      = send "|c" name (show n)
-    flushMetric name (Metrics.Gauge n)        = send "|g" name (show n)
-    flushMetric name (Metrics.Distribution d) = sendDistribution name d
-    flushMetric _    (Metrics.Label _)        = return ()
+    flushOne pc (name, val) =
+      let fullName = dottedPrefix <> name <> dottedSuffix
+      in  flushMetric fullName val pc
 
-    sendDistribution name d = do
-      send "|g" (name <> "." <> "mean"    ) (show $ Distribution.mean     d)
-      send "|g" (name <> "." <> "variance") (show $ Distribution.variance d)
-      send "|c" (name <> "." <> "count"   ) (show $ Distribution.count    d)
-      send "|g" (name <> "." <> "sum"     ) (show $ Distribution.sum      d)
-      send "|g" (name <> "." <> "min"     ) (show $ Distribution.min      d)
-      send "|g" (name <> "." <> "max"     ) (show $ Distribution.max      d)
+    flushMetric name (Metrics.Counter n)      pc = sendCounter name n pc
+    flushMetric name (Metrics.Gauge n)        pc = pc <$ sendGauge name n
+    flushMetric name (Metrics.Distribution d) pc = sendDistribution name d pc
+    flushMetric _    (Metrics.Label _)        pc = return pc
+
+    sendGauge name n = send "|g" name (show n)
+
+    -- The statsd convention is to send only the increment
+    -- since the last report was made, not the total count.
+    sendCounter name n pc = do
+      let old = fromMaybe 0 (M.lookup name pc)
+      send "|c" name (show (n - old))
+      return (M.insert name n pc)
+
+    sendDistribution name d pc = do
+      sendGauge         (name <> "." <> "mean"    ) (Distribution.mean     d)
+      sendGauge         (name <> "." <> "variance") (Distribution.variance d)
+      uc <- sendCounter (name <> "." <> "count"   ) (Distribution.count    d) pc
+      sendGauge         (name <> "." <> "sum"     ) (Distribution.sum      d)
+      sendGauge         (name <> "." <> "min"     ) (Distribution.min      d)
+      sendGauge         (name <> "." <> "max"     ) (Distribution.max      d)
+      return uc
 
     isDebug = debug opts
     dottedPrefix = if T.null (prefix opts) then "" else prefix opts <> "."
