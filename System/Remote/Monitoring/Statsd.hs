@@ -191,7 +191,7 @@ flushSample sample sendSample opts priorCounts =
     sendGauge name n = send "|g" name (show n)
 
     -- The statsd convention is to send only the increment
-    -- since the last report was made, not the total count.
+    -- since the last report, not the total count.
     sendCounter name n pc = do
       let old = fromMaybe 0 (M.lookup name pc)
       send "|c" name (show (n - old))
