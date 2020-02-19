@@ -1,3 +1,7 @@
+## 0.2.4.1 (2020-02-xx)
+
+ * GHC 8.8 support.
+
 ## 0.2.4.0 (2018-08-01)
 
 * Don't rethrow `ThreadKilled` exceptions to the thread that invoked
