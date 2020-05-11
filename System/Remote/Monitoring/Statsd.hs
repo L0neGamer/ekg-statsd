@@ -13,6 +13,9 @@
 -- You probably want to include some of the predefined metrics defined
 -- in the ekg-core package, by calling e.g. the 'registerGcStats'
 -- function defined in that package.
+--
+-- Note that the StatsD protocol does not allow @':'@ in metric names, so
+-- any occurrences are replaced by @'_'@.
 module System.Remote.Monitoring.Statsd
     (
       -- * The statsd syncer
