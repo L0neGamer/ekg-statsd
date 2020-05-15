@@ -13,6 +13,9 @@
 -- You probably want to include some of the predefined metrics defined
 -- in the ekg-core package, by calling e.g. the 'registerGcStats'
 -- function defined in that package.
+--
+-- Note that the StatsD protocol does not allow @':'@ in metric names, so
+-- any occurrences are replaced by @'_'@.
 module System.Remote.Monitoring.Statsd
     (
       -- * The statsd syncer
@@ -175,9 +178,13 @@ time = (round . (* 1000000.0) . toDouble) `fmap` getPOSIXTime
 flushSample :: Metrics.Sample -> (B8.ByteString -> IO ()) -> StatsdOptions -> IO ()
 flushSample sample sendSample opts = do
     forM_ (M.toList sample) $ \ (name, val) ->
-        let fullName = dottedPrefix <> name <> dottedSuffix
+        let fullName = dottedPrefix <> sanitizeName name <> dottedSuffix
         in  flushMetric fullName val
   where
+    sanitizeName = T.map sanitizeChar
+    sanitizeChar ':' = '_'
+    sanitizeChar c   = c
+
     flushMetric name (Metrics.Counter n)      = send "|c" name (show n)
     flushMetric name (Metrics.Gauge n)        = send "|g" name (show n)
     flushMetric name (Metrics.Distribution d) = sendDistribution name d
