@@ -5,6 +5,7 @@
 *.tix
 .hpc/
 /dist/*
+/dist-newstyle/*
 /examples/dist/*
 .cabal-sandbox/
 .DS_Store
