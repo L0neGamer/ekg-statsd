@@ -1,6 +1,8 @@
-## 0.2.4.1 (2020-??-??)
+## 0.2.4.1 (2020-05-21)
 
- * TBD.
+ * Sanitize metric names by replacing `:` with `_` to adhere to the StatsD
+   protocol ([#26](https://github.com/tibbe/ekg-statsd/pull/26)).
+ * Add support for GHC 8.10 in base bounds and CI.
 
 ## 0.2.4.0 (2018-08-01)
 
