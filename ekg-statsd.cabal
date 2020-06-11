@@ -1,5 +1,5 @@
 name:                ekg-statsd
-version:             0.2.4.0
+version:             0.2.4.1
 synopsis:            Push metrics to statsd
 description:
   This library lets you push system metrics to a statsd server.
@@ -14,21 +14,21 @@ category:            System
 build-type:          Simple
 extra-source-files:  CHANGES.md
 cabal-version:       >=1.10
-tested-with:         GHC == 8.6.2, GHC == 8.4.4,  GHC == 8.2.2,
-                     GHC == 8.0.2, GHC == 7.10.3, GHC == 7.8.4,
-                     GHC == 7.6.3
+tested-with:         GHC == 8.10.1, GHC == 8.8.3, GHC == 8.6.5,
+                     GHC == 8.4.4, GHC == 8.2.2, GHC == 8.0.2,
+                     GHC == 7.10.3, GHC == 7.8.4, GHC == 7.6.3
 
 library
   exposed-modules:
     System.Remote.Monitoring.Statsd
 
   build-depends:
-    base >= 4.6 && < 4.13,
+    base >= 4.6 && < 4.15,
     bytestring < 1.0,
     ekg-core >= 0.1 && < 1.0,
-    network < 2.9,
+    network < 3.2,
     text < 1.3,
-    time < 1.9,
+    time < 1.10,
     unordered-containers < 0.3
 
   default-language:    Haskell2010

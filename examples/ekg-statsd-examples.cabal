@@ -10,7 +10,7 @@ cabal-version:       >=1.10
 
 executable ekg-statsd-examples
   main-is:             Basic.hs
-  build-depends:       base >=4.6 && <4.10,
+  build-depends:       base >=4.6 && <4.15,
                        ekg-core,
                        ekg-statsd
   default-language:    Haskell2010
