@@ -1,3 +1,8 @@
+## 0.2.5.0 (2020-06-15)
+
+ * Bugfix: when reporting counter values to statsd, send only the
+   increments ([#23](https://github.com/tibbe/ekg-statsd/pull/23)).
+
 ## 0.2.4.1 (2020-05-21)
 
  * Sanitize metric names by replacing `:` with `_` to adhere to the StatsD
