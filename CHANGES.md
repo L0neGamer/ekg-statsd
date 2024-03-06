@@ -1,6 +1,6 @@
 ## Unreleased
 
- * Support GHC 9.0, 9.2, 9.4.
+ * Support GHC 9.0 through 9.8.
 
 ## 0.2.5.0 (2020-06-15)
 
