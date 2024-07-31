@@ -1,41 +1,51 @@
-name:                ekg-statsd
-version:             0.2.5.0
-synopsis:            Push metrics to statsd
+name:               ekg-statsd
+version:            0.2.5.0
+synopsis:           Push metrics to statsd
 description:
   This library lets you push system metrics to a statsd server.
-homepage:            https://github.com/tibbe/ekg-statsd
-bug-reports:         https://github.com/tibbe/ekg-statsd/issues
-license:             BSD3
-license-file:        LICENSE
-author:              Johan Tibell
-maintainer:          Johan Tibell <johan.tibell@gmail.com>,
-                     Mikhail Glushenkov <mikhail.glushenkov@gmail.com>
-category:            System
-build-type:          Simple
-extra-source-files:  CHANGES.md
-cabal-version:       >=1.10
-tested-with:         GHC == 9.8.1,  GHC == 9.6.4,
-                     GHC == 9.4.3,  GHC == 9.2.5, GHC == 9.0.2,
-                     GHC == 8.10.1, GHC == 8.8.3, GHC == 8.6.5,
-                     GHC == 8.4.4,  GHC == 8.2.2, GHC == 8.0.2,
-                     GHC == 7.10.3, GHC == 7.8.4, GHC == 7.6.3
+
+homepage:           https://github.com/tibbe/ekg-statsd
+bug-reports:        https://github.com/tibbe/ekg-statsd/issues
+license:            BSD3
+license-file:       LICENSE
+author:             Johan Tibell
+maintainer:
+  Johan Tibell <johan.tibell@gmail.com>,
+  Mikhail Glushenkov <mikhail.glushenkov@gmail.com>
+
+category:           System
+build-type:         Simple
+extra-source-files: CHANGES.md
+cabal-version:      >=1.10
+tested-with:
+  GHC ==7.6.3
+   || ==7.8.4
+   || ==7.10.3
+   || ==8.0.2
+   || ==8.2.2
+   || ==8.4.4
+   || ==8.6.5
+   || ==8.8.3
+   || ==8.10.1
+   || ==9.0.2
+   || ==9.2.5
+   || ==9.4.3
+   || ==9.6.4
+   || ==9.8.1
 
 library
-  exposed-modules:
-    System.Remote.Monitoring.Statsd
-
+  exposed-modules:  System.Remote.Monitoring.Statsd
   build-depends:
-    base >= 4.6 && < 4.20,
-    bytestring < 1.0,
-    ekg-core >= 0.1 && < 1.0,
-    network < 3.2,
-    text < 2.2,
-    time < 1.13,
-    unordered-containers < 0.3
+      base                  >=4.6 && <4.20
+    , bytestring            <1.0
+    , ekg-core              >=0.1 && <1.0
+    , network               <3.2
+    , text                  <2.2
+    , time                  <1.13
+    , unordered-containers  <0.3
 
-  default-language:    Haskell2010
-
-  ghc-options: -Wall
+  default-language: Haskell2010
+  ghc-options:      -Wall
 
 source-repository head
   type:     git
