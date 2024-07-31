@@ -1,3 +1,7 @@
+## Unreleased
+
+ * Support GHC 9.0 through 9.8.
+
 ## 0.2.5.0 (2020-06-15)
 
  * Bugfix: when reporting counter values to statsd, send only the
