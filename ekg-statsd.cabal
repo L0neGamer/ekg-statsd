@@ -1,11 +1,11 @@
 name:               ekg-statsd
-version:            0.2.5.0
+version:            0.2.6.0
 synopsis:           Push metrics to statsd
 description:
   This library lets you push system metrics to a statsd server.
 
-homepage:           https://github.com/tibbe/ekg-statsd
-bug-reports:        https://github.com/tibbe/ekg-statsd/issues
+homepage:           https://github.com/l0negamer/ekg-statsd
+bug-reports:        https://github.com/l0negamer/ekg-statsd/issues
 license:            BSD3
 license-file:       LICENSE
 author:             Johan Tibell
@@ -47,4 +47,4 @@ library
 
 source-repository head
   type:     git
-  location: https://github.com/tibbe/ekg-statsd.git
+  location: https://github.com/l0negamer/ekg-statsd.git

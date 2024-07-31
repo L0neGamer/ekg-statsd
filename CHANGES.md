@@ -1,6 +1,7 @@
-## Unreleased
+## 0.2.6.0 (2024-07-31)
 
  * Support GHC 9.0 through 9.8.
+ * Bump network to <3.3
 
 ## 0.2.5.0 (2020-06-15)
 
