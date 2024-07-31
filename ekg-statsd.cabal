@@ -39,7 +39,7 @@ library
       base                  >=4.6 && <4.20
     , bytestring            <1.0
     , ekg-core              >=0.1 && <1.0
-    , network               <3.2
+    , network               <3.3
     , text                  <2.2
     , time                  <1.13
     , unordered-containers  <0.3
